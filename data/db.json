@@ -1,0 +1,30 @@
+{
+  "teams": [],
+  "players": [],
+  "matches": [],
+  "awards": [],
+  "notifications": [],
+  "simulationEnabled": false,
+  "games": [
+    "football",
+    "table_tennis",
+    "volleyball",
+    "athletics"
+  ],
+  "version": 1,
+  "accounts": [
+    {
+      "username": "specialist",
+      "nickname": "Gamer God",
+      "password": "specialist123",
+      "email": "specialistgamergod@gmail.com"
+    },
+    {
+      "username": "fan2526",
+      "nickname": "Parish Fanatic",
+      "password": "fan2526password",
+      "email": "fan2026@parish.com"
+    }
+  ],
+  "mediaPosts": []
+}

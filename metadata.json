@@ -1,0 +1,6 @@
+{
+  "name": "Sports Tournament Championship Dashboard",
+  "description": "Full-stack mobile-first web app for the upcoming multi-sport championship on Aug 9, featuring live scores, brackets, team leaders, player stats, interactive venue map, and admin board.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
