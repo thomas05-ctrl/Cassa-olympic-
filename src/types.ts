@@ -144,4 +144,5 @@ export interface TournamentDb {
   version: number;
   accounts?: UserAccount[];
   mediaPosts?: MediaPost[];
+  unitLabel?: "parish" | "deanery" | "club" | "zone";
 }

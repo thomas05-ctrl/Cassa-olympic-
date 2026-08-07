@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { TournamentDb, Match, Team, Player, SportType, Award, UserRole } from "../types";
+import { getUnitLabels, UnitType } from "../utils/unitHelper";
 import {
   Lock,
   Unlock,
@@ -43,6 +44,7 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const [passcode, setPasscode] = useState("");
   const [passMessage, setPassMessage] = useState({ text: "", type: "" });
+  const unit = getUnitLabels(db.unitLabel);
   const [wrongCount, setWrongCount] = useState<number>(() => {
     try {
       const saved = localStorage.getItem("cassa_admin_trials");
@@ -1052,26 +1054,75 @@ export default function AdminPanel({
             </form>
           )}
 
-          {/* TAB CONTENT 3: ADD PARISH (ADMIN) */}
+          {/* TAB CONTENT 3: ADD PARISH/DEANERY (ADMIN) */}
           {activeTab === "parishes" && (
             <div className="space-y-6">
+              {/* ORGANIZATION CLASSIFICATION LEVEL SWITCHER */}
+              <div className={`p-4 rounded-2xl border ${
+                theme === "dark" ? "bg-black/40 border-amber-500/20" : "bg-amber-50/60 border-amber-200"
+              }`}>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-amber-500 font-extrabold block">
+                      ORGANIZATION CLASSIFICATION LEVEL
+                    </span>
+                    <h4 className={`text-xs font-sans font-extrabold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                      Set Dynamic Terminology (Parish, Deanery, Club, Zone)
+                    </h4>
+                    <p className="text-[11px] text-gray-400">
+                      Currently set to <span className="text-amber-400 font-bold font-mono">{unit.singular}</span>. All standings, scoreboards, and rosters will adapt automatically.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5 bg-black/30 p-1 rounded-xl border border-amber-500/30">
+                    {(["parish", "deanery", "club", "zone"] as const).map((type) => {
+                      const isSelected = (db.unitLabel || "parish") === type;
+                      const labels = getUnitLabels(type);
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            const newDb = { ...db, unitLabel: type, version: (db.version || 0) + 1 };
+                            onUpdateDb(newDb);
+                            setPassMessage({
+                              text: `Classification level switched to '${labels.singular}'! Saved to database.`,
+                              type: "success"
+                            });
+                            setTimeout(() => setPassMessage({ text: "", type: "" }), 3500);
+                          }}
+                          className={`text-[10px] font-mono uppercase font-black py-1.5 px-3 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                            isSelected
+                              ? "bg-amber-500 text-black shadow-md font-extrabold"
+                              : "text-gray-300 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          <span>{labels.icon}</span>
+                          <span>{labels.singular}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
               <form onSubmit={handleAddParish} className="space-y-4">
                 <div className="border-b border-amber-500/10 pb-2">
                   <h3 className={`text-sm font-sans font-black flex items-center gap-1.5 ${theme === "dark" ? "text-amber-400" : "text-amber-805"}`}>
-                    <Flag className="w-4 h-4 text-amber-500" /> Enroll New Competing Parish or Club
+                    <Flag className="w-4 h-4 text-amber-500" /> Enroll New Competing {unit.singular}
                   </h3>
-                  <p className="text-xs text-gray-400">Register local parishes competing in the current CASSA OLYMPIC cycle with official parish crests & logos.</p>
+                  <p className="text-xs text-gray-400">Register local {unit.pluralLower} competing in the current CASSA OLYMPIC cycle with official crests & logos.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">PARISH NAME</label>
+                    <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">{unit.singular.toUpperCase()} NAME</label>
                     <input
                       type="text"
                       required
                       value={parishForm.name}
                       onChange={(e) => setParishForm({ ...parishForm, name: e.target.value })}
-                      placeholder="e.g. St. Patrick's Cathedral Parish..."
+                      placeholder={`e.g. ${unit.singular === "Deanery" ? "Calabar Central Deanery" : "St. Patrick's Cathedral Parish"}...`}
                       className={`text-xs p-2.5 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
                         theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-slate-50 border-slate-205 text-slate-800"
                       }`}

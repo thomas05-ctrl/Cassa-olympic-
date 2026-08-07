@@ -37,6 +37,8 @@ export default function App() {
 
   // Primary database state
   const [db, setDb] = useState<TournamentDb>(defaultDb);
+  const dbVersionRef = useRef<number>(defaultDb.version || 1);
+  dbVersionRef.current = db.version || 1;
   const [activeTab, setActiveTab] = useState<"dashboard" | "map" | "alerts" | "admin">("dashboard");
   const [selectedSport, setSelectedSport] = useState<SportType>("football");
   const [userRole, setUserRole] = useState<UserRole>(() => {
@@ -134,31 +136,27 @@ export default function App() {
       if (response.ok) {
         const newData = (await response.json()) as TournamentDb;
         
-        // Push notification detection
-        const prevCount = prevNotifCountRef.current;
-        const currentCount = newData.notifications.length;
+        // Prevent stale poll responses from overwriting local state updates
+        if (!newData.version || newData.version >= dbVersionRef.current) {
+          const prevCount = prevNotifCountRef.current;
+          const currentCount = (newData.notifications || []).length;
 
-        if (prevCount > 0 && currentCount > prevCount) {
-          // Identify newly generated notifications
-          const newNotifs = newData.notifications.slice(0, currentCount - prevCount);
-          
-          // Feed to in-app toasts immediately
-          newNotifs.forEach((item, idx) => {
-            const toastId = Date.now() + Math.random() + idx;
-            setToasts((prev) => [...prev, { ...item, toastId }]);
-            
-            // Automatically clear toast alert bubble after 5.5 seconds
-            setTimeout(() => {
-              setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
-            }, 5500);
-          });
+          if (prevCount > 0 && currentCount > prevCount) {
+            const newNotifs = newData.notifications.slice(0, currentCount - prevCount);
+            newNotifs.forEach((item, idx) => {
+              const toastId = Date.now() + Math.random() + idx;
+              setToasts((prev) => [...prev, { ...item, toastId }]);
+              setTimeout(() => {
+                setToasts((prev) => prev.filter((t) => t.toastId !== toastId));
+              }, 5500);
+            });
+            setShowNotificationBellBadge(true);
+          }
 
-          // Toggle notification alert indicators
-          setShowNotificationBellBadge(true);
+          prevNotifCountRef.current = currentCount;
+          setDb(newData);
+          dbVersionRef.current = newData.version || 1;
         }
-
-        prevNotifCountRef.current = currentCount;
-        setDb(newData);
       }
     } catch (err) {
       console.warn("Express endpoint backend offline/building. Operating Local Fallback State.", err);
@@ -219,16 +217,34 @@ export default function App() {
 
   // Update backend database State
   const handleUpdateDbState = async (updatedDb: TournamentDb) => {
-    setDb(updatedDb);
+    const nextVersion = (dbVersionRef.current || updatedDb.version || 0) + 1;
+    const dbToSave = { ...updatedDb, version: nextVersion };
+    setDb(dbToSave);
+    dbVersionRef.current = nextVersion;
+
     try {
-      await fetch("/api/update-tournament", {
+      const res = await fetch("/api/update-tournament", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedDb)
+        body: JSON.stringify(dbToSave)
       });
+      if (res.ok) {
+        const resData = await res.json();
+        if (resData && resData.db) {
+          setDb(resData.db);
+          dbVersionRef.current = resData.db.version || nextVersion;
+        }
+      }
     } catch (err) {
       console.error("Failed to sync database state with Express server:", err);
     }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    const postsList = db.mediaPosts || [];
+    const updatedMedia = postsList.filter(p => p.id !== postId);
+    const newDb = { ...db, mediaPosts: updatedMedia };
+    await handleUpdateDbState(newDb);
   };
 
   // Reseed default data
@@ -981,6 +997,9 @@ export default function App() {
             mediaPosts={db.mediaPosts || []}
             onReactPost={handleReactPost}
             anonUserId={anonUserId}
+            unitLabel={db.unitLabel}
+            userRole={userRole}
+            onDeletePost={handleDeletePost}
           />
         )}
 
@@ -991,6 +1010,7 @@ export default function App() {
             awards={db.awards}
             matches={db.matches}
             theme={theme}
+            unitLabel={db.unitLabel}
           />
         )}
 

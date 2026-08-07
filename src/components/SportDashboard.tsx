@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { SportType, Team, Player, Match, Award, MediaPost } from "../types";
-import { Trophy, HelpCircle, Calendar, Award as AwardIcon, Flame, ArrowUpRight, Play, Heart, Lock, CheckCircle2, Share2 } from "lucide-react";
+import { SportType, Team, Player, Match, Award, MediaPost, UserRole } from "../types";
+import { Trophy, HelpCircle, Calendar, Award as AwardIcon, Flame, ArrowUpRight, Play, Heart, Lock, CheckCircle2, Share2, Trash2 } from "lucide-react";
+import { getUnitLabels, UnitType } from "../utils/unitHelper";
 
 interface SportDashboardProps {
   sport: SportType;
@@ -16,6 +17,9 @@ interface SportDashboardProps {
   onLikePost?: (postId: string) => void;
   onReactPost?: (postId: string, emoji: string) => void;
   anonUserId?: string;
+  unitLabel?: UnitType;
+  userRole?: UserRole;
+  onDeletePost?: (postId: string) => void;
 }
 
 function TeamLogo({ team, theme }: { team?: Team; theme?: string }) {
@@ -63,11 +67,15 @@ export default function SportDashboard({
   mediaPosts = [],
   onLikePost,
   onReactPost,
-  anonUserId
+  anonUserId,
+  unitLabel,
+  userRole,
+  onDeletePost
 }: SportDashboardProps) {
   const [mediaFilter, setMediaFilter] = useState<"all" | "live" | "recent" | "upcoming">("all");
   const [copiedMessage, setCopiedMessage] = useState<string | null>(null);
   const [awardSport, setAwardSport] = useState<string>(sport);
+  const unit = getUnitLabels(unitLabel);
 
   const handleShareMatch = async (match: Match) => {
     const teamA = getTeamName(match.teamAId);
@@ -262,7 +270,7 @@ export default function SportDashboard({
           <div className={`p-12 text-center rounded-2xl border-2 border-dashed italic text-xs ${
             theme === "dark" ? "bg-black/30 border-amber-500/10 text-gray-500" : "bg-slate-50 border-amber-200 text-slate-400"
           }`}>
-            No competing Parishes or Clubs registered for this sport category. Admin can configure parishes in settings.
+            No competing {unit.plural} or Delegations registered for this sport category. Admin can configure {unit.pluralLower} in settings.
           </div>
         ) : (
           <div className="overflow-x-auto select-none">
@@ -272,7 +280,7 @@ export default function SportDashboard({
                   theme === "dark" ? "border-amber-500/20 text-amber-450/80" : "border-amber-200 text-amber-900"
                 }`}>
                   <th className="py-3 px-1">RANK</th>
-                  <th className="py-3">PARISH / CLUB</th>
+                  <th className="py-3">{unit.singular.toUpperCase()} / DELEGATION</th>
                   {sport !== "athletics" ? (
                     <>
                       <th className="py-3 text-center hidden sm:table-cell">PL</th>
@@ -665,7 +673,7 @@ export default function SportDashboard({
             <h3 className={`text-sm font-sans font-black uppercase tracking-widest flex items-center gap-2 ${theme === "dark" ? "text-amber-400" : "text-amber-850 text-amber-805"}`}>
               📺 CASSA OLYMPIC MEDIA HUB
             </h3>
-            <p className="text-[11px] text-gray-400 font-mono mt-1">Live match captures and dynamically updated video feeds from active parishes.</p>
+            <p className="text-[11px] text-gray-400 font-mono mt-1">Live match captures and dynamically updated video feeds from active {unit.pluralLower}.</p>
           </div>
 
           {/* Quick Category Filters */}
@@ -755,6 +763,23 @@ export default function SportDashboard({
                       }`}>
                         {post.category}
                       </span>
+
+                      {/* Direct Delete Post Button for Admin/Coordinators */}
+                      {onDeletePost && userRole !== "spectator" && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete media post "${post.title}" permanently from database?`)) {
+                              onDeletePost(post.id);
+                            }
+                          }}
+                          className="absolute top-3 right-3 text-[9px] font-mono font-black bg-red-600/90 hover:bg-red-700 text-white px-2 py-1 rounded-lg border border-red-400/50 shadow-lg cursor-pointer flex items-center gap-1 backdrop-blur-sm z-10 transition-all"
+                          title="Permanently Delete Post"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Delete</span>
+                        </button>
+                      )}
 
                       {/* Overlay indicator */}
                       {post.mediaType === "video" && (

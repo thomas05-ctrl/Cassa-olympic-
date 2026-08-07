@@ -24,17 +24,29 @@ function readDb(): TournamentDb {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, "utf-8");
       const parsed = JSON.parse(raw);
-      // Auto-migrate/fallback for any missing database schema properties
-      if (!parsed.games) {
-        parsed.games = ["football", "table_tennis", "volleyball", "athletics"];
+
+      // If data file was empty or missing core collections, initialize with default seed data
+      const isUninitialized = (!parsed.teams || parsed.teams.length === 0) &&
+                              (!parsed.matches || parsed.matches.length === 0) &&
+                              (!parsed.mediaPosts || parsed.mediaPosts.length === 0);
+
+      if (isUninitialized) {
+        writeDb(defaultDb);
+        return defaultDb;
       }
-      if (!parsed.accounts) {
-        parsed.accounts = defaultDb.accounts || [];
-      }
-      if (!parsed.mediaPosts) {
-        parsed.mediaPosts = defaultDb.mediaPosts || [];
-      }
-      // Ensure all teams are migrated to include their Catholic altar server logoUrl
+
+      // Fill in defaults for any undefined array fields
+      if (!parsed.games) parsed.games = defaultDb.games || ["football", "table_tennis", "volleyball", "athletics"];
+      if (parsed.accounts === undefined) parsed.accounts = defaultDb.accounts || [];
+      if (parsed.mediaPosts === undefined) parsed.mediaPosts = defaultDb.mediaPosts || [];
+      if (parsed.teams === undefined) parsed.teams = defaultDb.teams || [];
+      if (parsed.players === undefined) parsed.players = defaultDb.players || [];
+      if (parsed.matches === undefined) parsed.matches = defaultDb.matches || [];
+      if (parsed.awards === undefined) parsed.awards = defaultDb.awards || [];
+      if (parsed.notifications === undefined) parsed.notifications = defaultDb.notifications || [];
+      if (parsed.unitLabel === undefined) parsed.unitLabel = "parish";
+
+      // Ensure all teams are migrated to include their logoUrl
       if (parsed.teams) {
         parsed.teams = parsed.teams.map((t: any) => {
           const matchedSeed = defaultDb.teams.find(st => st.id === t.id);
@@ -88,17 +100,16 @@ app.post("/api/update-tournament", (req, res) => {
       if (idx === -1) {
         mergedAccounts.push(acc);
       } else {
-        // Safe update with optional fields like password, preferences, and nickname
         mergedAccounts[idx] = { ...mergedAccounts[idx], ...acc };
       }
     });
   }
 
-  // 2. Merge Media Post Likes & reactions dynamically so client's new items or edits are fully preserved
-  const mergedMediaPosts = (clientData.mediaPosts || []).map((clientPost: any) => {
+  // 2. Preserve media post Likes & reactions dynamically for posts present in clientData
+  const clientMediaPosts = clientData.mediaPosts || [];
+  const mergedMediaPosts = clientMediaPosts.map((clientPost: any) => {
     const servPost = (serverDb.mediaPosts || []).find((p: any) => p.id === clientPost.id);
     if (servPost) {
-      // Union of likes between server memory and client toggling so no fan cheers are lost
       const combinedLikes = Array.from(new Set([
         ...(clientPost.likes || []),
         ...(servPost.likes || [])
@@ -126,19 +137,16 @@ app.post("/api/update-tournament", (req, res) => {
     return clientPost;
   });
 
-  // Since we want any user with any device to be able to make live updates that persist to the internet instantly,
-  // we always accept the client's new tournament structural updates (such as score updates, scheduled fixtures, etc.)
-  // but safely merge registered user accounts and post likes so they are never lost.
-  // We automatically increment the database version on the server so that all other polling devices will detect and load it immediately.
   const finalDb: TournamentDb = {
     ...clientData,
     accounts: mergedAccounts,
     mediaPosts: mergedMediaPosts,
+    unitLabel: clientData.unitLabel || serverDb.unitLabel || "parish",
     version: (serverDb.version || 0) + 1
   };
 
   writeDb(finalDb);
-  res.json({ success: true, version: finalDb.version });
+  res.json({ success: true, db: finalDb, version: finalDb.version });
 });
 
 // 2.5 Recieved Guest Toggle Reaction

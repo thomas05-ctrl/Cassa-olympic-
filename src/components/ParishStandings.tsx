@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Award as AwardIcon, Trophy, Shield, Users, Medal, Star, CheckCircle2 } from "lucide-react";
 import { Match, Team, Player, Award, SportType } from "../types";
 import MedalStandingsChart from "./MedalStandingsChart";
+import { getUnitLabels, UnitType } from "../utils/unitHelper";
 
 interface ParishStandingsProps {
   teams: Team[];
@@ -9,6 +10,7 @@ interface ParishStandingsProps {
   awards: Award[];
   matches: Match[];
   theme: "light" | "dark";
+  unitLabel?: UnitType;
 }
 
 export default function ParishStandings({
@@ -16,9 +18,11 @@ export default function ParishStandings({
   players,
   awards,
   matches,
-  theme
+  theme,
+  unitLabel
 }: ParishStandingsProps) {
   const [selectedParish, setSelectedParish] = useState<string | null>(null);
+  const unit = getUnitLabels(unitLabel);
 
   // Compute overall gold, silver, bronze count per parish across all matches & sports
   const computedParishTallies = teams.map((team) => {
@@ -57,10 +61,10 @@ export default function ParishStandings({
           🏅 ARCHDIOCESAN GAMES HONOR ROLL
         </span>
         <h2 className={`text-2xl font-sans font-black tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-          Parish Standings & Medal Standings Tally
+          {unit.singular} Standings & Medal Standings Tally
         </h2>
         <p className={`text-xs mt-1.5 leading-relaxed max-w-2xl font-medium ${theme === "dark" ? "text-zinc-400" : "text-slate-500"}`}>
-          Welcome to the central honor board of the Calabar Archdiocesan Altar Servers Association Nigeria Olympics. Explore real-time medal counts and parish details.
+          Welcome to the central honor board of the Calabar Archdiocesan Altar Servers Association Nigeria Olympics. Explore real-time medal counts and {unit.singularLower} details.
         </p>
       </div>
 
@@ -70,7 +74,7 @@ export default function ParishStandings({
           <h4 className={`text-sm font-sans font-black uppercase tracking-wider flex items-center gap-1.5 ${theme === "dark" ? "text-amber-400" : "text-slate-900"}`}>
             📊 Interactive Medal Standings Analysis (D3.js)
           </h4>
-          <p className="text-[11px] text-gray-400 mt-0.5 font-mono">Hover over the color-coded segments (Gold, Silver, Bronze) to explore parish outcomes in real-time.</p>
+          <p className="text-[11px] text-gray-400 mt-0.5 font-mono">Hover over the color-coded segments (Gold, Silver, Bronze) to explore {unit.singularLower} outcomes in real-time.</p>
         </div>
         
         <div className="py-2">
@@ -86,7 +90,7 @@ export default function ParishStandings({
               <Trophy className="w-4 h-4 text-amber-500" /> Archdiocesan All-Sport Medal Standings
             </h4>
             <p className="text-[11.5px] text-zinc-400 mt-0.5 font-sans">
-              Select or click on any parish row to unfold their corresponding registered team competitors and official awards history.
+              Select or click on any {unit.singularLower} row to unfold their corresponding registered team competitors and official awards history.
             </p>
           </div>
           <span className={`text-[9px] font-mono border rounded px-2 py-0.5 uppercase font-bold shrink-0 ${
@@ -100,7 +104,7 @@ export default function ParishStandings({
           <div className={`p-10 text-center border border-dashed rounded-xl italic text-xs ${
             theme === "dark" ? "bg-[#0b0c0d] border-zinc-800 text-zinc-500" : "bg-slate-50 border-slate-200 text-slate-400"
           }`}>
-            No competing parishes are registered yet. Set up parishes on the Console to view standings!
+            No competing {unit.pluralLower} are registered yet. Set up {unit.pluralLower} on the Console to view standings!
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -108,7 +112,7 @@ export default function ParishStandings({
               <thead>
                 <tr className="font-mono text-[10px] tracking-wider uppercase border-b border-zinc-800/20 dark:border-zinc-805 text-gray-400">
                   <th className="py-3 px-1 w-16 text-center">RANK</th>
-                  <th className="py-3">PARISH ALUMNI GUILD</th>
+                  <th className="py-3">{unit.singular.toUpperCase()} / DELEGATION</th>
                   <th className="py-3 text-center w-24">🏆 GOLDS</th>
                   <th className="py-3 text-center w-24">🥈 SILVERS</th>
                   <th className="py-3 text-center w-24">🥉 BRONZES</th>
