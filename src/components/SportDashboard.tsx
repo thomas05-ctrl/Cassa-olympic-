@@ -311,7 +311,7 @@ export default function SportDashboard({
                       </td>
                       <td className={`py-4 font-bold ${theme === "dark" ? "text-gray-100" : "text-slate-900"}`}>
                         <div className="flex items-center gap-3">
-                          <span className={`w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 ${team.logoColor}`} />
+                          <TeamLogo team={team} theme={theme} />
                           <div>
                             <span className="block text-sm font-sans font-extrabold whitespace-normal">{team.name}</span>
                             {team.isSuspended && (

@@ -149,7 +149,18 @@ export default function ParishStandings({
                       </td>
                       <td className="py-4 font-bold text-sm">
                         <div className="flex items-center gap-3">
-                          <span className={`w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 ${parish.logoColor || "bg-gray-400"}`} />
+                          {parish.logoUrl ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/30 shrink-0 bg-zinc-950 flex items-center justify-center shadow-sm">
+                              <img
+                                src={parish.logoUrl}
+                                alt={parish.name}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <span className={`w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 ${parish.logoColor || "bg-gray-400"}`} />
+                          )}
                           <div className="text-left">
                             <span className="block font-sans whitespace-normal">{parish.name}</span>
                             <span className={`text-[10px] font-medium block font-sans ${theme === "dark" ? "text-gray-400" : "text-slate-500"}`}>
@@ -200,7 +211,18 @@ export default function ParishStandings({
               <div className="text-left space-y-6">
                 <div className="flex items-center justify-between border-b border-zinc-800/10 dark:border-white/5 pb-4">
                   <div className="flex items-center gap-3">
-                    <span className={`w-5 h-5 rounded-full ${parish.logoColor || "bg-amber-500"}`} />
+                    {parish.logoUrl ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/40 shrink-0 bg-zinc-950 flex items-center justify-center shadow">
+                        <img
+                          src={parish.logoUrl}
+                          alt={parish.name}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <span className={`w-5 h-5 rounded-full ${parish.logoColor || "bg-amber-500"}`} />
+                    )}
                     <div>
                       <h4 className={`text-lg font-sans font-black uppercase ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
                         {parish.name}

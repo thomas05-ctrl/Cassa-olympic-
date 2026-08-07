@@ -24,10 +24,24 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
     return team ? team.name : "TBD";
   };
 
-  const getTeamLogoColor = (teamId?: string) => {
-    if (!teamId) return "bg-zinc-800 border-zinc-700";
+  const renderTeamBadge = (teamId?: string) => {
+    if (!teamId) return <span className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0 bg-zinc-800" />;
     const team = teams.find((t) => t.id === teamId);
-    return team ? team.logoColor : "bg-zinc-800 border-zinc-700";
+    if (!team) return <span className="w-2.5 h-2.5 rounded-full border border-black/10 shrink-0 bg-zinc-800" />;
+    
+    if (team.logoUrl) {
+      return (
+        <div className="w-3.5 h-3.5 rounded-full overflow-hidden border border-amber-500/30 shrink-0 bg-zinc-950 flex items-center justify-center">
+          <img
+            src={team.logoUrl}
+            alt={team.name}
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      );
+    }
+    return <span className={`w-2.5 h-2.5 rounded-full border border-black/10 shrink-0 ${team.logoColor || "bg-amber-500"}`} />;
   };
 
   // If there are literally no matches in the DB for this sport, display a perfect empty-state bracket card
@@ -113,7 +127,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                     {/* Team A */}
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full border border-black/10 ${getTeamLogoColor(m.teamAId)}`} />
+                        {renderTeamBadge(m.teamAId)}
                         <span className={`font-semibold truncate max-w-[124px] ${theme === "dark" ? "text-gray-300" : "text-slate-800"}`}>{getTeamName(m.teamAId)}</span>
                       </div>
                       <span className={`font-mono px-1.5 rounded text-[10px] font-bold min-w-[20px] text-center ${
@@ -125,7 +139,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                     {/* Team B */}
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full border border-black/10 ${getTeamLogoColor(m.teamBId)}`} />
+                        {renderTeamBadge(m.teamBId)}
                         <span className={`font-semibold truncate max-w-[124px] ${theme === "dark" ? "text-gray-300" : "text-slate-800"}`}>{getTeamName(m.teamBId)}</span>
                       </div>
                       <span className={`font-mono px-1.5 rounded text-[10px] font-bold min-w-[20px] text-center ${
@@ -168,7 +182,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full border border-black/10 ${getTeamLogoColor(m.teamAId)}`} />
+                        {renderTeamBadge(m.teamAId)}
                         <span className={`font-bold truncate max-w-[124px] ${theme === "dark" ? "text-gray-200" : "text-slate-800"}`}>{getTeamName(m.teamAId)}</span>
                       </div>
                       <span className={`font-mono px-1.5 rounded text-xs font-bold min-w-[20px] text-center ${
@@ -179,7 +193,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full border border-black/10 ${getTeamLogoColor(m.teamBId)}`} />
+                        {renderTeamBadge(m.teamBId)}
                         <span className={`font-bold truncate max-w-[124px] ${theme === "dark" ? "text-gray-200" : "text-slate-800"}`}>{getTeamName(m.teamBId)}</span>
                       </div>
                       <span className={`font-mono px-1.5 rounded text-xs font-bold min-w-[20px] text-center ${
@@ -222,7 +236,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                 <div className="flex flex-col gap-2.5">
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2.5">
-                      <span className={`w-2.5 h-2.5 rounded-full border border-black/10 ${getTeamLogoColor(final.teamAId)}`} />
+                      {renderTeamBadge(final.teamAId)}
                       <span className={`font-black truncate max-w-[114px] ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
                         {getTeamName(final.teamAId)}
                       </span>
@@ -237,7 +251,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex items-center gap-2.5">
-                      <span className={`w-2.5 h-2.5 rounded-full border border-black/10 ${getTeamLogoColor(final.teamBId)}`} />
+                      {renderTeamBadge(final.teamBId)}
                       <span className={`font-black truncate max-w-[114px] ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
                         {getTeamName(final.teamBId)}
                       </span>

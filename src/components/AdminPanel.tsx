@@ -16,7 +16,12 @@ import {
   Flag,
   UserPlus,
   Dribbble,
-  Sparkles
+  Sparkles,
+  Upload,
+  Image,
+  Pencil,
+  Link,
+  X
 } from "lucide-react";
 
 interface AdminPanelProps {
@@ -78,8 +83,17 @@ export default function AdminPanel({
   const [parishForm, setParishForm] = useState({
     name: "",
     logoColor: "bg-emerald-500",
+    logoUrl: "",
     sport: gamesList[0] || "football"
   });
+
+  const [editingParish, setEditingParish] = useState<Team | null>(null);
+  const [editParishForm, setEditParishForm] = useState<{
+    id: string;
+    name: string;
+    logoColor: string;
+    logoUrl: string;
+  }>({ id: "", name: "", logoColor: "", logoUrl: "" });
 
   // State for adding a roster member / player
   const [memberForm, setMemberForm] = useState({
@@ -432,6 +446,25 @@ export default function AdminPanel({
     setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
   };
 
+  const handleParishLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image size should be less than 10MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      if (isEdit) {
+        setEditParishForm((prev) => ({ ...prev, logoUrl: dataUrl }));
+      } else {
+        setParishForm((prev) => ({ ...prev, logoUrl: dataUrl }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddParish = (e: React.FormEvent) => {
     e.preventDefault();
     if (!parishForm.name.trim()) return;
@@ -440,6 +473,7 @@ export default function AdminPanel({
       id: `team-parish-${Date.now()}`,
       name: parishForm.name.trim(),
       logoColor: parishForm.logoColor,
+      logoUrl: parishForm.logoUrl.trim() || undefined,
       sport: "all",
       played: 0,
       won: 0,
@@ -456,8 +490,36 @@ export default function AdminPanel({
     };
 
     onUpdateDb(newDb);
-    setParishForm({ ...parishForm, name: "" });
+    setParishForm({ ...parishForm, name: "", logoUrl: "" });
     setPassMessage({ text: `Parish '${newTeam.name}' successfully enrolled for all sports competitions!`, type: "success" });
+    setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
+  };
+
+  const handleSaveEditParish = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editParishForm.name.trim() || !editParishForm.id) return;
+
+    const updatedTeams = db.teams.map((t) => {
+      if (t.id === editParishForm.id) {
+        return {
+          ...t,
+          name: editParishForm.name.trim(),
+          logoColor: editParishForm.logoColor,
+          logoUrl: editParishForm.logoUrl.trim() || undefined
+        };
+      }
+      return t;
+    });
+
+    const newDb = {
+      ...db,
+      teams: updatedTeams,
+      version: db.version + 1
+    };
+
+    onUpdateDb(newDb);
+    setEditingParish(null);
+    setPassMessage({ text: `Parish '${editParishForm.name}' updated successfully!`, type: "success" });
     setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
   };
 
@@ -998,7 +1060,7 @@ export default function AdminPanel({
                   <h3 className={`text-sm font-sans font-black flex items-center gap-1.5 ${theme === "dark" ? "text-amber-400" : "text-amber-805"}`}>
                     <Flag className="w-4 h-4 text-amber-500" /> Enroll New Competing Parish or Club
                   </h3>
-                  <p className="text-xs text-gray-400">Register local parishes competing in the current CASSA OLYMPIC cycle.</p>
+                  <p className="text-xs text-gray-400">Register local parishes competing in the current CASSA OLYMPIC cycle with official parish crests & logos.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1009,7 +1071,7 @@ export default function AdminPanel({
                       required
                       value={parishForm.name}
                       onChange={(e) => setParishForm({ ...parishForm, name: e.target.value })}
-                      placeholder="e.g. St. Patrick's Parish..."
+                      placeholder="e.g. St. Patrick's Cathedral Parish..."
                       className={`text-xs p-2.5 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
                         theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-slate-50 border-slate-205 text-slate-800"
                       }`}
@@ -1037,15 +1099,180 @@ export default function AdminPanel({
                   </div>
                 </div>
 
+                {/* PARISH CREST / LOGO INPUT AND UPLOAD */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-mono text-amber-400 block font-bold flex items-center gap-1.5">
+                    <Image className="w-3.5 h-3.5" /> PARISH LOGO / CREST (IMAGE UPLOAD OR URL)
+                  </label>
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                    <div className="relative flex-1 w-full">
+                      <input
+                        type="url"
+                        value={parishForm.logoUrl}
+                        onChange={(e) => setParishForm({ ...parishForm, logoUrl: e.target.value })}
+                        placeholder="Paste image web link (https://...) or upload file below"
+                        className={`text-xs p-2.5 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
+                          theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-slate-50 border-slate-205 text-slate-800"
+                        }`}
+                      />
+                    </div>
+
+                    <label className="cursor-pointer inline-flex items-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 px-3.5 py-2.5 rounded-xl text-xs font-mono font-bold active:scale-95 transition-all shrink-0">
+                      <Upload className="w-3.5 h-3.5" />
+                      Upload Logo Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleParishLogoFileUpload(e, false)}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+
+                  {/* LOGO LIVE PREVIEW BOX */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <span className="text-[10px] font-mono text-gray-400">Preview:</span>
+                    {parishForm.logoUrl ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/50 bg-black flex items-center justify-center">
+                          <img src={parishForm.logoUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setParishForm({ ...parishForm, logoUrl: "" })}
+                          className="text-[10px] font-mono text-red-400 hover:underline cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <span className={`w-6 h-6 rounded-full border border-black/20 ${parishForm.logoColor}`} />
+                        <span className="text-[10px] italic">Color badge fallback (no image set)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="bg-amber-500 text-black hover:bg-amber-400 text-xs font-sans font-black uppercase tracking-wider py-2.5 px-6 rounded-xl active:scale-95 transition-all cursor-pointer"
+                    className="bg-amber-500 text-black hover:bg-amber-400 text-xs font-sans font-black uppercase tracking-wider py-2.5 px-6 rounded-xl active:scale-95 transition-all cursor-pointer shadow-md"
                   >
                     Enroll Parish Team
                   </button>
                 </div>
               </form>
+
+              {/* EDIT PARISH MODAL / CARD */}
+              {editingParish && (
+                <div className="p-4 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 backdrop-blur-md space-y-4 my-4 animate-fade-in">
+                  <div className="flex justify-between items-center border-b border-amber-500/20 pb-2">
+                    <h4 className="text-xs font-sans font-black text-amber-400 uppercase flex items-center gap-1.5">
+                      <Pencil className="w-3.5 h-3.5" /> Edit Parish Logo & Information
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setEditingParish(null)}
+                      className="text-gray-400 hover:text-white p-1 rounded-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveEditParish} className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">PARISH NAME</label>
+                        <input
+                          type="text"
+                          required
+                          value={editParishForm.name}
+                          onChange={(e) => setEditParishForm({ ...editParishForm, name: e.target.value })}
+                          className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
+                            theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">BRAND COLOR ACCENT</label>
+                        <select
+                          value={editParishForm.logoColor}
+                          onChange={(e) => setEditParishForm({ ...editParishForm, logoColor: e.target.value })}
+                          className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
+                            theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
+                          }`}
+                        >
+                          <option value="bg-emerald-500 text-white">Emerald Green</option>
+                          <option value="bg-sky-500 text-white">Sky Blue</option>
+                          <option value="bg-amber-500 text-slate-900">Amber Gold</option>
+                          <option value="bg-purple-500 text-white">Royal Purple</option>
+                          <option value="bg-red-500 text-white">Crimson Red</option>
+                          <option value="bg-orange-500 text-white">Vibrant Orange</option>
+                          <option value="bg-pink-500 text-white">Neon Pink</option>
+                          <option value="bg-indigo-600 text-white">Midnight Indigo</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-mono text-amber-400 block mb-1 font-bold">LOGO / CREST IMAGE URL OR FILE</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="url"
+                          value={editParishForm.logoUrl}
+                          onChange={(e) => setEditParishForm({ ...editParishForm, logoUrl: e.target.value })}
+                          placeholder="Image Web URL (https://...)"
+                          className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 flex-1 ${
+                            theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
+                          }`}
+                        />
+                        <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-mono font-bold active:scale-95 transition-all">
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleParishLogoFileUpload(e, true)}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono text-gray-400">Current Logo:</span>
+                        {editParishForm.logoUrl ? (
+                          <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-500 bg-black">
+                            <img src={editParishForm.logoUrl} alt="Edit preview" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <span className={`w-5 h-5 rounded-full ${editParishForm.logoColor}`} />
+                        )}
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingParish(null)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-mono text-gray-400 hover:text-white border border-transparent hover:border-gray-700"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-1.5 rounded-xl text-xs font-sans font-black bg-amber-500 text-black hover:bg-amber-400 shadow"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
 
               {/* LIST OF REGISTERED COMPETITOR PARISHES */}
               <div className="mt-8 border-t border-amber-500/15 pt-6">
@@ -1078,7 +1305,13 @@ export default function AdminPanel({
                         }`}
                       >
                         <div className="flex items-center gap-3 max-w-[55%]">
-                          <span className={`w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 ${team.logoColor}`} />
+                          {team.logoUrl ? (
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 shrink-0 bg-black flex items-center justify-center shadow-sm">
+                              <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+                            </div>
+                          ) : (
+                            <span className={`w-4 h-4 rounded-full border border-black/10 shrink-0 ${team.logoColor}`} />
+                          )}
                           <div className="truncate">
                             <span className={`text-sm font-sans font-black block truncate ${theme === "dark" ? "text-white" : "text-slate-905"}`}>
                               {team.name}
@@ -1091,6 +1324,23 @@ export default function AdminPanel({
 
                         {/* Actions on the right hand side */}
                         <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingParish(team);
+                              setEditParishForm({
+                                id: team.id,
+                                name: team.name,
+                                logoColor: team.logoColor || "bg-emerald-500",
+                                logoUrl: team.logoUrl || ""
+                              });
+                            }}
+                            className="text-amber-400 border border-amber-500/20 p-2 rounded-lg bg-amber-500/10 hover:bg-amber-500 hover:text-black transition-all cursor-pointer"
+                            title="Edit Parish Logo & Details"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleToggleParishSuspension(team.id)}
