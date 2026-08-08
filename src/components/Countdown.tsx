@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Timer, Calendar, ShieldAlert } from "lucide-react";
 
 export default function Countdown({ theme }: { theme?: string }) {
-  const targetDate = new Date("2026-08-09T00:00:00-07:00").getTime();
+  // Nigerian Time (WAT is UTC+1). Tournament starts tomorrow Aug 9, 2026 at 08:00 AM WAT.
+  const targetDate = new Date("2026-08-09T08:00:00+01:00").getTime();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -59,10 +60,10 @@ export default function Countdown({ theme }: { theme?: string }) {
           </div>
           <div>
             <div className={`text-xs font-mono tracking-wider font-bold ${theme === "dark" ? "text-amber-400" : "text-amber-600"}`}>
-              CASSA OLYMPIC BIENNIAL COUNTDOWN
+              CASSA OLYMPIC BIENNIAL COUNTDOWN (WAT / NIGERIA)
             </div>
             <h3 className={`text-lg font-sans font-black tracking-tight flex items-center gap-1.5 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-              August 9, 2026 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${theme === "dark" ? "bg-zinc-900 border-amber-500/20 text-amber-500 font-bold" : "bg-amber-50 border-amber-200 text-amber-700 font-semibold"}`}>09:00 AM MST</span>
+              August 9, 2026 <span className={`text-[10px] px-2 py-0.5 rounded-full border ${theme === "dark" ? "bg-zinc-900 border-amber-500/20 text-amber-500 font-bold" : "bg-amber-50 border-amber-200 text-amber-700 font-semibold"}`}>08:00 AM WAT (Calabar, Nigeria)</span>
             </h3>
           </div>
         </div>

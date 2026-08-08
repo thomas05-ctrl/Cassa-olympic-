@@ -55,7 +55,7 @@ export default function AdminPanel({
   });
   const [lastStatus, setLastStatus] = useState<"none" | "wrong" | "correct">("none");
   const [activeTab, setActiveTab] = useState<
-    "scores" | "matchmaker" | "parishes" | "members" | "games" | "awards" | "notifications" | "simulation" | "media"
+    "scores" | "matchmaker" | "parishes" | "members" | "games" | "awards" | "notifications" | "media"
   >("scores");
 
   const getTeamName = (teamId?: string) => {
@@ -416,13 +416,7 @@ export default function AdminPanel({
     onUpdateDb(newDb);
   };
 
-  // 7. Toggle Simulator Ticker
-  const handleToggleSimulation = () => {
-    const newDb = { ...db, simulationEnabled: !db.simulationEnabled, version: db.version + 1 };
-    onUpdateDb(newDb);
-  };
-
-  // 8. Custom additions (Parishes, Members, Games)
+  // 7. Custom additions (Parishes, Members, Games)
   const handleAddGame = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSportName.trim()) return;
@@ -610,7 +604,7 @@ export default function AdminPanel({
             CASSA Olympic Organizer Panel
           </h2>
           <p className={`text-xs font-sans mt-0.5 ${theme === "dark" ? "text-gray-400" : "text-slate-500"}`}>
-            Manage dynamic parishes, roster members, matches, sports categories, circular push indicators, and simulation loops.
+            Manage dynamic organization units, roster members, fixtures, sports categories, and circular push indicators.
           </p>
         </div>
 
@@ -732,8 +726,7 @@ export default function AdminPanel({
                 { id: "members", label: "Add Members", roleRequired: "admin" },
                 { id: "games", label: "Add Game Category", roleRequired: "admin" },
                 { id: "awards", label: "Assign Awards", roleRequired: "admin" },
-                { id: "notifications", label: "circular broadcast", roleRequired: "admin" },
-                { id: "simulation", label: "Auto Simulation", roleRequired: "coordinator" }
+                { id: "notifications", label: "circular broadcast", roleRequired: "admin" }
               ] as const
             ).map((tab) => {
               const isAllowed = userRole === "admin" || tab.roleRequired === "coordinator";
@@ -1944,11 +1937,16 @@ export default function AdminPanel({
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleDeletePost(post.id)}
-                          className="hover:bg-red-500/20 text-red-500 p-2 rounded-lg text-xs leading-none transition-all"
-                          title="Purge snippet"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this media post?")) {
+                              handleDeletePost(post.id);
+                            }
+                          }}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-2.5 py-1.5 rounded-lg text-xs font-sans font-bold flex items-center gap-1 transition-all cursor-pointer flex-shrink-0"
+                          title="Delete media post"
                         >
-                          🗑️
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </div>
                     ))}
@@ -2016,88 +2014,28 @@ export default function AdminPanel({
                 />
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex items-center justify-between">
                 <button
                   type="submit"
                   className="bg-blue-600 text-white hover:bg-blue-500 text-xs font-sans font-bold py-2.5 px-5 rounded-xl active:scale-95 transition-all cursor-pointer"
                 >
                   Broadcast Circular Alerts
                 </button>
+
+                <button
+                  type="button"
+                  onClick={onResetData}
+                  className={`border text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+                    theme === "dark"
+                      ? "bg-black/30 border-white/10 text-gray-300 hover:text-white hover:border-white/20"
+                      : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
+                  }`}
+                  title="Reset database to initial clean state"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Re-seed Fresh Database
+                </button>
               </div>
             </form>
-          )}
-
-          {/* TAB CONTENT 8: SIMULATION TICK CONTROL (COORDINATOR+) */}
-          {activeTab === "simulation" && (
-            <div className="space-y-4">
-              <div className="border-b border-white/5 pb-2 flex items-center justify-between">
-                <div>
-                  <h3 className={`text-sm font-sans font-black flex items-center gap-1.5 ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
-                    <Settings className="w-4 h-4 text-blue-550" /> Automated Score Server simulation Loop
-                  </h3>
-                  <p className="text-xs text-gray-400">Control active core servers and reset simulation caches.</p>
-                </div>
-                <span className="text-xs font-mono font-bold text-blue-400">
-                  {db.simulationEnabled ? "🟢 ACTIVE CLOCK SIMULATING" : "🔴 INACTIVE STOPPED"}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <p className="text-xs text-gray-450 leading-relaxed font-sans">
-                  When enabled, the server process runs a dynamic polling task checking for any active <b>"LIVE"</b> match. It will automatically update scores, progress time, log events and broadcast multiplayer web notification indicators to render brackets instantly under St Patrick Parish Calabar.
-                </p>
-
-                <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                  theme === "dark" ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"
-                }`}>
-                  <div>
-                    <h5 className="text-xs font-bold">Progress live score updates dynamically?</h5>
-                    <p className={`text-[10px] mt-1 ${theme === "dark" ? "text-gray-500" : "text-slate-500"}`}>
-                      (Simulates background ticks every 8 seconds)
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={handleToggleSimulation}
-                      className={`text-xs px-4 py-2 font-sans font-bold rounded-xl transition-all cursor-pointer ${
-                        db.simulationEnabled
-                          ? "bg-red-500/10 border border-red-500/25 text-red-500 hover:bg-red-500/25"
-                          : "bg-blue-600 text-white hover:bg-blue-500"
-                      }`}
-                    >
-                      {db.simulationEnabled ? "Disable Server Simulation" : "Enable Server Simulation"}
-                    </button>
-                  </div>
-                </div>
-
-                <div className={`p-4 rounded-xl border space-y-3 ${
-                  theme === "dark" ? "bg-white/5 border-white/5" : "bg-slate-50 border-slate-200"
-                }`}>
-                  <div>
-                    <h5 className="text-xs font-bold">Reset Configuration & Reseed Base DB</h5>
-                    <p className={`text-[10.5px] mt-0.5 ${theme === "dark" ? "text-gray-500" : "text-slate-500"}`}>
-                      Had fun simulating scores, and want to reset the environment to pristine CASSA OLYMPIC default states? Use the button below:
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={onResetData}
-                      className={`border text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
-                        theme === "dark"
-                          ? "bg-black/30 border-white/10 text-gray-300 hover:text-white hover:border-white/20"
-                          : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
-                      }`}
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> Re-seed Fresh Default DB Data
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           )}
         </div>
       )}

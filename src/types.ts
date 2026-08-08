@@ -139,10 +139,10 @@ export interface TournamentDb {
   matches: Match[];
   awards: Award[];
   notifications: PushNotification[];
-  simulationEnabled: boolean;
   games?: string[];
   version: number;
   accounts?: UserAccount[];
   mediaPosts?: MediaPost[];
   unitLabel?: "parish" | "deanery" | "club" | "zone";
+  simulationEnabled?: boolean;
 }

@@ -58,7 +58,7 @@ export default function BracketView({ matches, teams, sport, theme }: BracketVie
           <Trophy className="w-4 h-4 text-blue-500 animate-pulse" /> Knockout Standings Bracket Link
         </h4>
         <p className="text-xs leading-relaxed max-w-md mx-auto">
-          No matches seeded by the administrator for <span className="font-bold underline uppercase">{sport}</span> yet. Change your role to Admin in the Console to seed the brackets or run a live simulation!
+          No matches scheduled for <span className="font-bold underline uppercase">{sport}</span> yet. Log in as an Organizer/Admin in the Console to schedule upcoming fixtures!
         </p>
       </div>
     );
