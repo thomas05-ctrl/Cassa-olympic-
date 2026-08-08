@@ -34,6 +34,28 @@ interface AdminPanelProps {
   onResetData: () => void;
 }
 
+const DEFAULT_PARISH_LOGOS = [
+  "https://images.unsplash.com/photo-1548625361-193433604f32?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1438032005730-c779502df39b?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80",
+  "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80"
+];
+
+function generateDefaultParishLogo(name: string): string {
+  if (!name || !name.trim()) return DEFAULT_PARISH_LOGOS[0];
+  let hash = 0;
+  const str = name.trim().toLowerCase();
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % DEFAULT_PARISH_LOGOS.length;
+  return DEFAULT_PARISH_LOGOS[index];
+}
+
 export default function AdminPanel({
   db,
   userRole,
@@ -465,11 +487,13 @@ export default function AdminPanel({
     e.preventDefault();
     if (!parishForm.name.trim()) return;
 
+    const logoUrlToUse = parishForm.logoUrl.trim() || generateDefaultParishLogo(parishForm.name);
+
     const newTeam: Team = {
       id: `team-parish-${Date.now()}`,
       name: parishForm.name.trim(),
       logoColor: parishForm.logoColor,
-      logoUrl: parishForm.logoUrl.trim() || undefined,
+      logoUrl: logoUrlToUse,
       sport: "all",
       played: 0,
       won: 0,
@@ -495,13 +519,15 @@ export default function AdminPanel({
     e.preventDefault();
     if (!editParishForm.name.trim() || !editParishForm.id) return;
 
+    const logoUrlToUse = editParishForm.logoUrl.trim() || generateDefaultParishLogo(editParishForm.name);
+
     const updatedTeams = db.teams.map((t) => {
       if (t.id === editParishForm.id) {
         return {
           ...t,
           name: editParishForm.name.trim(),
           logoColor: editParishForm.logoColor,
-          logoUrl: editParishForm.logoUrl.trim() || undefined
+          logoUrl: logoUrlToUse
         };
       }
       return t;
@@ -1146,16 +1172,16 @@ export default function AdminPanel({
                 {/* PARISH CREST / LOGO INPUT AND UPLOAD */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-mono text-amber-400 block font-bold flex items-center gap-1.5">
-                    <Image className="w-3.5 h-3.5" /> PARISH LOGO / CREST (IMAGE UPLOAD OR URL)
+                    <Image className="w-3.5 h-3.5" /> PARISH LOGO / CREST (OPTIONAL - LEAVE BLANK FOR AUTO CREST)
                   </label>
                   
                   <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                     <div className="relative flex-1 w-full">
                       <input
-                        type="url"
+                        type="text"
                         value={parishForm.logoUrl}
                         onChange={(e) => setParishForm({ ...parishForm, logoUrl: e.target.value })}
-                        placeholder="Paste image web link (https://...) or upload file below"
+                        placeholder="Image Web Link (Optional - auto-assigned if empty)"
                         className={`text-xs p-2.5 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
                           theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-slate-50 border-slate-205 text-slate-800"
                         }`}
@@ -1192,8 +1218,10 @@ export default function AdminPanel({
                       </div>
                     ) : (
                       <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <span className={`w-6 h-6 rounded-full border border-black/20 ${parishForm.logoColor}`} />
-                        <span className="text-[10px] italic">Color badge fallback (no image set)</span>
+                        <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-500/40 bg-black flex items-center justify-center">
+                          <img src={generateDefaultParishLogo(parishForm.name)} alt="Auto preview" className="w-full h-full object-cover opacity-85" />
+                        </div>
+                        <span className="text-[10px] text-amber-400/90 italic font-mono">Auto-assigned crest logo on save (Optional link)</span>
                       </div>
                     )}
                   </div>
@@ -1262,13 +1290,13 @@ export default function AdminPanel({
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-mono text-amber-400 block mb-1 font-bold">LOGO / CREST IMAGE URL OR FILE</label>
+                      <label className="text-[10px] font-mono text-amber-400 block mb-1 font-bold">LOGO / CREST IMAGE (OPTIONAL - LEAVE BLANK FOR AUTO LOGO)</label>
                       <div className="flex gap-2">
                         <input
-                          type="url"
+                          type="text"
                           value={editParishForm.logoUrl}
                           onChange={(e) => setEditParishForm({ ...editParishForm, logoUrl: e.target.value })}
-                          placeholder="Image Web URL (https://...)"
+                          placeholder="Image Web URL (Optional - leave blank for auto logo)"
                           className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 flex-1 ${
                             theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
                           }`}
@@ -1288,13 +1316,18 @@ export default function AdminPanel({
 
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono text-gray-400">Current Logo:</span>
+                        <span className="text-[10px] font-mono text-gray-400">Current Logo Preview:</span>
                         {editParishForm.logoUrl ? (
-                          <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-500 bg-black">
+                          <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-500 bg-black flex items-center justify-center">
                             <img src={editParishForm.logoUrl} alt="Edit preview" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <span className={`w-5 h-5 rounded-full ${editParishForm.logoColor}`} />
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-7 h-7 rounded-full overflow-hidden border border-amber-500 bg-black flex items-center justify-center">
+                              <img src={generateDefaultParishLogo(editParishForm.name)} alt="Auto preview" className="w-full h-full object-cover opacity-85" />
+                            </div>
+                            <span className="text-[9.5px] text-amber-400 italic font-mono">Auto logo on save</span>
+                          </div>
                         )}
                       </div>
 
