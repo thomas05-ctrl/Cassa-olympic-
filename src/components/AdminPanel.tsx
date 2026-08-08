@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { TournamentDb, Match, Team, Player, SportType, Award, UserRole } from "../types";
+import { TournamentDb, Match, Team, Player, SportType, Award, UserRole, TeamPhoto } from "../types";
 import { getUnitLabels, UnitType } from "../utils/unitHelper";
 import {
   Lock,
@@ -22,7 +22,8 @@ import {
   Image,
   Pencil,
   Link,
-  X
+  X,
+  Camera
 } from "lucide-react";
 
 interface AdminPanelProps {
@@ -44,6 +45,16 @@ const DEFAULT_PARISH_LOGOS = [
   "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=400&q=80",
   "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=400&q=80"
 ];
+
+export function getTeamPhotos(team?: Team | null): TeamPhoto[] {
+  if (!team || !team.galleryPhotos) return [];
+  return team.galleryPhotos.map((item, idx) => {
+    if (typeof item === "string") {
+      return { id: `photo-${idx}`, url: item, caption: `${team.name} Photo #${idx + 1}` };
+    }
+    return item;
+  });
+}
 
 function generateDefaultParishLogo(name: string): string {
   if (!name || !name.trim()) return DEFAULT_PARISH_LOGOS[0];
@@ -118,6 +129,11 @@ export default function AdminPanel({
     logoColor: string;
     logoUrl: string;
   }>({ id: "", name: "", logoColor: "", logoUrl: "" });
+
+  // State for Team Gallery Management
+  const [managingGalleryTeam, setManagingGalleryTeam] = useState<Team | null>(null);
+  const [newPhotoUrl, setNewPhotoUrl] = useState("");
+  const [newPhotoCaption, setNewPhotoCaption] = useState("");
 
   // State for adding a roster member / player
   const [memberForm, setMemberForm] = useState({
@@ -573,6 +589,88 @@ export default function AdminPanel({
     const team = db.teams.find((t) => t.id === teamId);
     const wasSuspended = team?.isSuspended;
     setPassMessage({ text: `Parish is now ${wasSuspended ? "Reinstated" : "Suspended"}!`, type: "success" });
+    setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
+  };
+
+  const handleGalleryFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setPassMessage({ text: "Error: Image file size must be less than 5MB", type: "error" });
+      setTimeout(() => setPassMessage({ text: "", type: "" }), 3500);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setNewPhotoUrl(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAddGalleryPhoto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!managingGalleryTeam || !newPhotoUrl.trim()) return;
+
+    const photoObj: TeamPhoto = {
+      id: `photo-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      url: newPhotoUrl.trim(),
+      caption: newPhotoCaption.trim() || `${managingGalleryTeam.name} Team Photo`,
+      uploadedAt: new Date().toISOString().split("T")[0]
+    };
+
+    const updatedTeams = db.teams.map((t) => {
+      if (t.id === managingGalleryTeam.id) {
+        const existingPhotos = getTeamPhotos(t);
+        return {
+          ...t,
+          galleryPhotos: [...existingPhotos, photoObj]
+        };
+      }
+      return t;
+    });
+
+    const updatedDb = { ...db, teams: updatedTeams, version: (db.version || 0) + 1 };
+    onUpdateDb(updatedDb);
+
+    const updatedTeamObj = updatedTeams.find((t) => t.id === managingGalleryTeam.id);
+    if (updatedTeamObj) {
+      setManagingGalleryTeam(updatedTeamObj);
+    }
+
+    setNewPhotoUrl("");
+    setNewPhotoCaption("");
+    setPassMessage({ text: `New photo added to ${managingGalleryTeam.name} gallery!`, type: "success" });
+    setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
+  };
+
+  const handleDeleteGalleryPhoto = (teamId: string, photoId: string) => {
+    if (!window.confirm("Are you sure you want to delete this photo from the team gallery?")) return;
+
+    const updatedTeams = db.teams.map((t) => {
+      if (t.id === teamId) {
+        const existingPhotos = getTeamPhotos(t);
+        return {
+          ...t,
+          galleryPhotos: existingPhotos.filter((p) => p.id !== photoId)
+        };
+      }
+      return t;
+    });
+
+    const updatedDb = { ...db, teams: updatedTeams, version: (db.version || 0) + 1 };
+    onUpdateDb(updatedDb);
+
+    if (managingGalleryTeam && managingGalleryTeam.id === teamId) {
+      const updatedTeamObj = updatedTeams.find((t) => t.id === teamId);
+      if (updatedTeamObj) {
+        setManagingGalleryTeam(updatedTeamObj);
+      }
+    }
+
+    setPassMessage({ text: "Photo removed from team gallery.", type: "success" });
     setTimeout(() => setPassMessage({ text: "", type: "" }), 3000);
   };
 
@@ -1404,6 +1502,24 @@ export default function AdminPanel({
                           <button
                             type="button"
                             onClick={() => {
+                              setManagingGalleryTeam(managingGalleryTeam?.id === team.id ? null : team);
+                              setNewPhotoUrl("");
+                              setNewPhotoCaption("");
+                            }}
+                            className={`text-xs font-mono font-bold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer flex items-center gap-1.5 ${
+                              managingGalleryTeam?.id === team.id
+                                ? "bg-amber-500 text-black border-amber-400 font-black shadow"
+                                : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/30"
+                            }`}
+                            title="Manage Team Gallery Photos"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <span>Gallery ({getTeamPhotos(team).length})</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
                               setEditingParish(team);
                               setEditParishForm({
                                 id: team.id,
@@ -1444,6 +1560,146 @@ export default function AdminPanel({
                   </div>
                 )}
               </div>
+
+              {/* TEAM GALLERY MANAGEMENT DRAWER */}
+              {managingGalleryTeam && (
+                <div className="p-5 rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 backdrop-blur-md space-y-4 my-6 animate-fade-in text-left">
+                  <div className="flex justify-between items-center border-b border-amber-500/30 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-400 bg-black flex items-center justify-center">
+                        <img src={managingGalleryTeam.logoUrl || generateDefaultParishLogo(managingGalleryTeam.name)} alt="" className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-sans font-black text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+                          <Camera className="w-4 h-4 text-amber-400" /> Team Gallery Manager: {managingGalleryTeam.name}
+                        </h4>
+                        <p className="text-[10px] font-mono text-gray-400">Photos will be displayed when users click this team name in the Honor Roll tab</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setManagingGalleryTeam(null)}
+                      className="text-gray-400 hover:text-white p-1 rounded-lg border border-zinc-700/50 hover:border-amber-500/40"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Form to add a new photo */}
+                  <form onSubmit={handleAddGalleryPhoto} className="space-y-3 bg-black/40 p-3.5 rounded-xl border border-white/10">
+                    <h5 className="text-[11px] font-mono font-bold text-amber-400 flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5" /> Upload or Link New Photo for {managingGalleryTeam.name}
+                    </h5>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">PHOTO WEB URL OR FILE UPLOAD</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newPhotoUrl}
+                            onChange={(e) => setNewPhotoUrl(e.target.value)}
+                            placeholder="Paste Photo URL (https://...)"
+                            className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 flex-1 ${
+                              theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
+                            }`}
+                          />
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-3 py-2 rounded-xl text-xs font-mono font-bold shrink-0">
+                            <Upload className="w-3.5 h-3.5" />
+                            Upload
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleGalleryFileUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-mono text-gray-400 block mb-1 font-bold">CAPTION / SQUAD DETAILS (OPTIONAL)</label>
+                        <input
+                          type="text"
+                          value={newPhotoCaption}
+                          onChange={(e) => setNewPhotoCaption(e.target.value)}
+                          placeholder="e.g. 2026 Athletics Squad parade at main arena..."
+                          className={`text-xs p-2 rounded-xl border focus:outline-none focus:border-amber-500 w-full ${
+                            theme === "dark" ? "bg-black/60 border-white/10 text-white" : "bg-white border-slate-300 text-slate-800"
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {newPhotoUrl && (
+                      <div className="flex items-center gap-3 pt-1">
+                        <span className="text-[10px] font-mono text-amber-400">Preview:</span>
+                        <div className="w-14 h-14 rounded-lg overflow-hidden border border-amber-500/50 bg-black shadow-md">
+                          <img src={newPhotoUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setNewPhotoUrl("")}
+                          className="text-[10px] font-mono text-red-400 hover:underline"
+                        >
+                          Remove Preview
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="pt-1">
+                      <button
+                        type="submit"
+                        disabled={!newPhotoUrl.trim()}
+                        className="px-5 py-2 rounded-xl text-xs font-sans font-black bg-amber-500 text-black hover:bg-amber-400 disabled:opacity-40 shadow cursor-pointer uppercase tracking-wider"
+                      >
+                        Add Photo to Team Gallery
+                      </button>
+                    </div>
+                  </form>
+
+                  {/* Existing photos grid */}
+                  <div className="space-y-2">
+                    <h5 className="text-[11px] font-mono font-bold text-gray-300 flex items-center gap-1.5">
+                      <span>Existing Squad & Event Photos</span>
+                      <span className="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-[10px]">
+                        {getTeamPhotos(managingGalleryTeam).length} Photos
+                      </span>
+                    </h5>
+
+                    {getTeamPhotos(managingGalleryTeam).length === 0 ? (
+                      <p className="text-xs text-gray-400 italic p-4 text-center border border-dashed rounded-xl bg-black/20">
+                        No team gallery photos uploaded yet. Use the form above to upload squad photos!
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto p-1">
+                        {getTeamPhotos(managingGalleryTeam).map((photo) => (
+                          <div key={photo.id} className="group relative rounded-xl overflow-hidden border border-white/10 bg-black/60 flex flex-col shadow-sm hover:border-amber-500/40 transition-all">
+                            <div className="aspect-video w-full overflow-hidden bg-zinc-950 relative">
+                              <img src={photo.url} alt={photo.caption || "Team photo"} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            </div>
+                            <div className="p-2.5 flex-1 flex flex-col justify-between">
+                              <p className="text-[11px] text-gray-200 font-medium line-clamp-2">{photo.caption || "Untitled photo"}</p>
+                              <div className="mt-2 flex items-center justify-between border-t border-white/5 pt-1.5">
+                                <span className="text-[9px] font-mono text-gray-400">{photo.uploadedAt || "Uploaded"}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteGalleryPhoto(managingGalleryTeam.id, photo.id)}
+                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/20 px-2 py-1 rounded text-[10px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="Delete Photo"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

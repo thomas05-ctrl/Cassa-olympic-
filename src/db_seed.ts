@@ -12,7 +12,12 @@ export const initialTeams: Team[] = [
     drawn: 0,
     lost: 0,
     points: 0,
-    stats: { gd: 0 }
+    stats: { gd: 0 },
+    galleryPhotos: [
+      { id: "sp-1", url: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80", caption: "Football Squad Training at St. Patrick's Arena", uploadedAt: "2026-08-01" },
+      { id: "sp-2", url: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80", caption: "Altar Servers Athletics & Track Lineup", uploadedAt: "2026-08-02" },
+      { id: "sp-3", url: "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=800&q=80", caption: "Parish Table Tennis Championship Squad", uploadedAt: "2026-08-03" }
+    ]
   },
   {
     id: "team-sacred-heart",
@@ -25,7 +30,11 @@ export const initialTeams: Team[] = [
     drawn: 0,
     lost: 0,
     points: 0,
-    stats: { gd: 0 }
+    stats: { gd: 0 },
+    galleryPhotos: [
+      { id: "sh-1", url: "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=800&q=80", caption: "Sacred Heart Volleyball & Track Team", uploadedAt: "2026-08-01" },
+      { id: "sh-2", url: "https://images.unsplash.com/photo-1517649763962-0c623266010b?auto=format&fit=crop&w=800&q=80", caption: "Opening Ceremony Delegation Parade", uploadedAt: "2026-08-04" }
+    ]
   },
   {
     id: "team-st-mary",
@@ -38,7 +47,10 @@ export const initialTeams: Team[] = [
     drawn: 0,
     lost: 0,
     points: 0,
-    stats: { gd: 0 }
+    stats: { gd: 0 },
+    galleryPhotos: [
+      { id: "sm-1", url: "https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=800&q=80", caption: "St. Mary's Champions Delegation", uploadedAt: "2026-08-02" }
+    ]
   },
   {
     id: "team-holy-trinity",

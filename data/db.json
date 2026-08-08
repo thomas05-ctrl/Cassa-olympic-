@@ -2,7 +2,7 @@
   "teams": [
     {
       "id": "team-st-patrick",
-      "name": "St. Patrick's Cathedral Parish",
+      "name": "St. Patrick's Parish",
       "logoColor": "bg-amber-500 text-slate-900",
       "logoUrl": "/altar_server_logo.jpg",
       "sport": "all",
@@ -11,7 +11,14 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      },
+      "galleryPhotos": [
+        { "id": "sp-1", "url": "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80", "caption": "Football Squad Training at St. Patrick's Arena", "uploadedAt": "2026-08-01" },
+        { "id": "sp-2", "url": "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80", "caption": "Altar Servers Athletics & Track Lineup", "uploadedAt": "2026-08-02" },
+        { "id": "sp-3", "url": "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=800&q=80", "caption": "Parish Table Tennis Championship Squad", "uploadedAt": "2026-08-03" }
+      ]
     },
     {
       "id": "team-sacred-heart",
@@ -24,7 +31,13 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      },
+      "galleryPhotos": [
+        { "id": "sh-1", "url": "https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=800&q=80", "caption": "Sacred Heart Volleyball & Track Team", "uploadedAt": "2026-08-01" },
+        { "id": "sh-2", "url": "https://images.unsplash.com/photo-1517649763962-0c623266010b?auto=format&fit=crop&w=800&q=80", "caption": "Opening Ceremony Delegation Parade", "uploadedAt": "2026-08-04" }
+      ]
     },
     {
       "id": "team-st-mary",
@@ -37,7 +50,12 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      },
+      "galleryPhotos": [
+        { "id": "sm-1", "url": "https://images.unsplash.com/photo-1543872084-c7bd3822856f?auto=format&fit=crop&w=800&q=80", "caption": "St. Mary's Champions Delegation", "uploadedAt": "2026-08-02" }
+      ]
     },
     {
       "id": "team-holy-trinity",
@@ -50,7 +68,9 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      }
     },
     {
       "id": "team-st-joseph",
@@ -63,7 +83,9 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      }
     },
     {
       "id": "team-st-paul",
@@ -76,24 +98,85 @@
       "drawn": 0,
       "lost": 0,
       "points": 0,
-      "stats": { "gd": 0 }
+      "stats": {
+        "gd": 0
+      }
     }
   ],
   "players": [
-    { "id": "p1", "name": "Emmanuel Archibong", "teamId": "team-st-patrick", "sport": "football", "number": 10, "role": "Captain / Forward", "stats": { "goals": 0, "appearances": 0 } },
-    { "id": "p2", "name": "Dominic Bassey", "teamId": "team-sacred-heart", "sport": "football", "number": 7, "role": "Striker", "stats": { "goals": 0, "appearances": 0 } },
-    { "id": "p3", "name": "Gabriel Okon", "teamId": "team-st-mary", "sport": "table_tennis", "number": 1, "role": "Singles Seed 1", "stats": { "setsWon": 0, "matchesPlayed": 0 } },
-    { "id": "p4", "name": "Michael Edet", "teamId": "team-holy-trinity", "sport": "volleyball", "number": 4, "role": "Spiker", "stats": { "blocks": 0, "aces": 0 } }
+    {
+      "id": "p1",
+      "name": "Emmanuel Archibong",
+      "teamId": "team-st-patrick",
+      "sport": "football",
+      "number": 10,
+      "role": "Captain / Forward",
+      "stats": {
+        "goals": 0,
+        "appearances": 0
+      }
+    },
+    {
+      "id": "p2",
+      "name": "Dominic Bassey",
+      "teamId": "team-sacred-heart",
+      "sport": "football",
+      "number": 7,
+      "role": "Striker",
+      "stats": {
+        "goals": 0,
+        "appearances": 0
+      }
+    },
+    {
+      "id": "p3",
+      "name": "Gabriel Okon",
+      "teamId": "team-st-mary",
+      "sport": "table_tennis",
+      "number": 1,
+      "role": "Singles Seed 1",
+      "stats": {
+        "setsWon": 0,
+        "matchesPlayed": 0
+      }
+    },
+    {
+      "id": "p4",
+      "name": "Michael Edet",
+      "teamId": "team-holy-trinity",
+      "sport": "volleyball",
+      "number": 4,
+      "role": "Spiker",
+      "stats": {
+        "blocks": 0,
+        "aces": 0
+      }
+    }
   ],
   "matches": [],
   "awards": [],
   "notifications": [],
-  "games": ["football", "table_tennis", "volleyball", "athletics"],
-  "version": 100,
+  "games": [
+    "football",
+    "table_tennis",
+    "volleyball",
+    "athletics"
+  ],
+  "version": 101,
   "unitLabel": "parish",
   "accounts": [
-    { "username": "specialist", "nickname": "Gamer God", "password": "specialist123", "email": "specialistgamergod@gmail.com" },
-    { "username": "fan2026", "nickname": "Parish Fanatic", "password": "fan2026password", "email": "fan2026@parish.com" }
+    {
+      "username": "specialist",
+      "nickname": "Gamer God",
+      "password": "specialist123",
+      "email": "specialistgamergod@gmail.com"
+    },
+    {
+      "username": "fan2026",
+      "nickname": "Parish Fanatic",
+      "password": "fan2026password",
+      "email": "fan2026@parish.com"
+    }
   ],
   "mediaPosts": []
 }

@@ -1,8 +1,18 @@
 import React, { useState } from "react";
-import { Award as AwardIcon, Trophy, Shield, Users, Medal, Star, CheckCircle2 } from "lucide-react";
-import { Match, Team, Player, Award, SportType } from "../types";
+import { Award as AwardIcon, Trophy, Shield, Users, Medal, Star, CheckCircle2, Camera, Image, Eye, X, ChevronLeft, ChevronRight, Maximize2 } from "lucide-react";
+import { Match, Team, Player, Award, SportType, TeamPhoto } from "../types";
 import MedalStandingsChart from "./MedalStandingsChart";
 import { getUnitLabels, UnitType } from "../utils/unitHelper";
+
+function getTeamPhotos(team?: Team): { id: string; url: string; caption?: string; uploadedAt?: string }[] {
+  if (!team || !team.galleryPhotos) return [];
+  return team.galleryPhotos.map((item, idx) => {
+    if (typeof item === "string") {
+      return { id: `photo-${idx}`, url: item, caption: `${team.name} Photo #${idx + 1}` };
+    }
+    return item;
+  });
+}
 
 interface ParishStandingsProps {
   teams: Team[];
@@ -22,6 +32,10 @@ export default function ParishStandings({
   unitLabel
 }: ParishStandingsProps) {
   const [selectedParish, setSelectedParish] = useState<string | null>(null);
+  const [lightboxState, setLightboxState] = useState<{
+    photos: { id: string; url: string; caption?: string; uploadedAt?: string }[];
+    currentIndex: number;
+  } | null>(null);
   const unit = getUnitLabels(unitLabel);
 
   // Compute overall gold, silver, bronze count per parish across all matches & sports
@@ -166,9 +180,17 @@ export default function ParishStandings({
                             <span className={`w-3.5 h-3.5 rounded-full border border-black/10 shrink-0 ${parish.logoColor || "bg-gray-400"}`} />
                           )}
                           <div className="text-left">
-                            <span className="block font-sans whitespace-normal">{parish.name}</span>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="block font-sans font-extrabold text-sm whitespace-normal">{parish.name}</span>
+                              {getTeamPhotos(parish).length > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[9.5px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400">
+                                  <Camera className="w-3 h-3" />
+                                  {getTeamPhotos(parish).length} {getTeamPhotos(parish).length === 1 ? "Photo" : "Photos"}
+                                </span>
+                              )}
+                            </div>
                             <span className={`text-[10px] font-medium block font-sans ${theme === "dark" ? "text-gray-400" : "text-slate-500"}`}>
-                              {parish.played || 0} event matches • {parish.awardsCount} awards conferred
+                              {parish.played || 0} event matches • {parish.awardsCount} awards • Click to view team gallery
                             </span>
                           </div>
                         </div>
@@ -292,9 +314,159 @@ export default function ParishStandings({
                     )}
                   </div>
                 </div>
+
+                {/* TEAM PHOTO GALLERY SECTION */}
+                {(() => {
+                  const teamPhotos = getTeamPhotos(parish);
+                  return (
+                    <div className="pt-4 border-t border-zinc-800/20 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-3">
+                        <h5 className="text-xs font-mono font-black uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                          <Camera className="w-4 h-4 text-amber-500" /> DEANERY TEAM PHOTO GALLERY ({teamPhotos.length})
+                        </h5>
+                        {teamPhotos.length > 0 && (
+                          <span className="text-[10px] font-mono text-gray-400">Click any photo to enlarge & view full caption</span>
+                        )}
+                      </div>
+
+                      {teamPhotos.length === 0 ? (
+                        <div className={`p-5 rounded-xl border border-dashed text-center ${
+                          theme === "dark" ? "bg-black/30 border-white/10 text-gray-400" : "bg-slate-50 border-slate-200 text-slate-500"
+                        }`}>
+                          <Camera className="w-6 h-6 mx-auto mb-1.5 opacity-40 text-amber-500" />
+                          <p className="text-xs font-bold text-gray-300">No team gallery photos uploaded for {parish.name} yet.</p>
+                          <p className="text-[10px] text-gray-400 font-mono mt-0.5">Admins can upload squad & event photos in the Control Console.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {teamPhotos.map((photo, pIdx) => (
+                            <button
+                              key={photo.id || pIdx}
+                              type="button"
+                              onClick={() => setLightboxState({ photos: teamPhotos, currentIndex: pIdx })}
+                              className="group relative rounded-xl overflow-hidden border border-amber-500/20 bg-black/60 shadow hover:border-amber-500 hover:shadow-lg transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            >
+                              <div className="aspect-video w-full overflow-hidden bg-zinc-950 relative">
+                                <img
+                                  src={photo.url}
+                                  alt={photo.caption || parish.name}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                                  <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-amber-500 text-black px-2.5 py-1 rounded-full text-[10px] font-mono font-black flex items-center gap-1 shadow-md">
+                                    <Maximize2 className="w-3 h-3" /> Enlarge
+                                  </span>
+                                </div>
+                              </div>
+                              {photo.caption && (
+                                <div className="p-2 border-t border-white/5 bg-zinc-900/80">
+                                  <p className="text-[10.5px] text-gray-200 font-medium line-clamp-1 group-hover:text-amber-400 transition-colors">
+                                    {photo.caption}
+                                  </p>
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
+        </div>
+      )}
+
+      {/* LIGHTBOX MODAL FOR FULL SCREEN PHOTO VIEWING */}
+      {lightboxState && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setLightboxState(null)}
+        >
+          <div
+            className="relative max-w-4xl w-full max-h-[90vh] bg-zinc-950 border border-amber-500/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Lightbox Header */}
+            <div className="p-4 border-b border-zinc-800 flex items-center justify-between bg-black/80">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-amber-500" />
+                <span className="text-xs font-mono font-bold text-amber-400">
+                  PHOTO {lightboxState.currentIndex + 1} OF {lightboxState.photos.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLightboxState(null)}
+                className="text-gray-400 hover:text-white p-1.5 rounded-lg border border-zinc-800 hover:border-amber-500/50 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Lightbox Image Area */}
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[300px] max-h-[70vh] overflow-hidden p-2">
+              <img
+                src={lightboxState.photos[lightboxState.currentIndex]?.url}
+                alt={lightboxState.photos[lightboxState.currentIndex]?.caption || "Team Photo"}
+                referrerPolicy="no-referrer"
+                className="max-w-full max-h-[65vh] object-contain rounded-lg"
+              />
+
+              {/* Previous Button */}
+              {lightboxState.photos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightboxState({
+                      ...lightboxState,
+                      currentIndex:
+                        (lightboxState.currentIndex - 1 + lightboxState.photos.length) %
+                        lightboxState.photos.length
+                    })
+                  }
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-amber-500 hover:text-black text-white p-2.5 rounded-full border border-white/20 transition-all cursor-pointer shadow-lg"
+                  title="Previous Photo"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+              )}
+
+              {/* Next Button */}
+              {lightboxState.photos.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLightboxState({
+                      ...lightboxState,
+                      currentIndex:
+                        (lightboxState.currentIndex + 1) % lightboxState.photos.length
+                    })
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-amber-500 hover:text-black text-white p-2.5 rounded-full border border-white/20 transition-all cursor-pointer shadow-lg"
+                  title="Next Photo"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+
+            {/* Lightbox Footer Caption */}
+            {lightboxState.photos[lightboxState.currentIndex]?.caption && (
+              <div className="p-4 border-t border-zinc-800 bg-zinc-900/90 text-center">
+                <p className="text-xs font-medium text-white">
+                  {lightboxState.photos[lightboxState.currentIndex].caption}
+                </p>
+                {lightboxState.photos[lightboxState.currentIndex].uploadedAt && (
+                  <p className="text-[10px] font-mono text-gray-400 mt-1">
+                    Uploaded: {lightboxState.photos[lightboxState.currentIndex].uploadedAt}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

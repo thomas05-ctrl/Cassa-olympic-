@@ -2,6 +2,13 @@ export type SportType = string;
 
 export type UserRole = "spectator" | "coordinator" | "admin";
 
+export interface TeamPhoto {
+  id: string;
+  url: string;
+  caption?: string;
+  uploadedAt?: string;
+}
+
 export interface Team {
   id: string;
   name: string;
@@ -15,6 +22,7 @@ export interface Team {
   stats: Record<string, string | number>;
   isSuspended?: boolean; // suspension indicator
   logoUrl?: string; // New church/parish logo URL
+  galleryPhotos?: (string | TeamPhoto)[]; // Team gallery photos
 }
 
 export interface PlayerStats {
